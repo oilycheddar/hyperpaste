@@ -22,16 +22,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if !AccessibilityHelper.isTrusted() {
             showAccessibilityPrompt()
             startAccessibilityPolling()
+            // Menu will open after permissions are granted (in polling callback)
         } else {
             startEventTap()
-        }
-
-        // Auto-open menu on first launch so the user sees where HyperPaste lives
-        if !UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
-            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                self?.statusItem.button?.performClick(nil)
-            }
+            openMenu()
         }
     }
 
@@ -110,8 +104,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.accessibilityTimer?.invalidate()
                 self?.accessibilityTimer = nil
                 self?.startEventTap()
+                self?.openMenu()
                 NSLog("[HyperPaste] Accessibility granted, event tap started")
             }
+        }
+    }
+
+    private func openMenu() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.statusItem.button?.performClick(nil)
         }
     }
 
