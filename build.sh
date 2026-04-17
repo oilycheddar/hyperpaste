@@ -28,6 +28,9 @@ echo "==> Setting version to $VERSION..."
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$APP_BUNDLE/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP_BUNDLE/Contents/Info.plist"
 
+echo "==> Fixing rpath for Sparkle framework..."
+install_name_tool -add_rpath "@loader_path/../Frameworks" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
+
 echo "==> Code signing with Developer ID..."
 codesign --force --deep --options runtime --timestamp -s "$DEVELOPER_ID" "$APP_BUNDLE"
 

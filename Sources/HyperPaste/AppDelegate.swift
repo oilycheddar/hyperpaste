@@ -25,6 +25,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             startEventTap()
         }
+
+        // Auto-open menu on first launch so the user sees where HyperPaste lives
+        if !UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
+            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                self?.statusItem.button?.performClick(nil)
+            }
+        }
     }
 
     private func setupMenuBar() {
@@ -92,6 +100,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func startEventTap() {
         eventTapManager = EventTapManager()
+        EventTapManager.shared = eventTapManager
         eventTapManager?.start()
     }
 

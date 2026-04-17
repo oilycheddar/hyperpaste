@@ -2,6 +2,9 @@ import Foundation
 import CoreGraphics
 
 class EventTapManager {
+    /// Shared instance so AccessibilityHelper can disable/enable the tap during Cmd+C fallback.
+    static var shared: EventTapManager?
+
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
 

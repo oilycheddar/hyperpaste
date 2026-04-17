@@ -28,20 +28,18 @@ enum RichTextBuilder {
             documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
         )
 
-        // --- Write all representations ---
+        // --- Write all representations via NSPasteboardItem ---
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
 
-        // Use declareTypes + setData/setString for multi-type write
-        var types: [NSPasteboard.PasteboardType] = [.html, .string]
-        if rtfData != nil { types.append(.rtf) }
-        pasteboard.declareTypes(types, owner: nil)
-
-        pasteboard.setString(html, forType: .html)
+        let item = NSPasteboardItem()
+        item.setString(html, forType: .html)
         if let rtf = rtfData {
-            pasteboard.setData(rtf, forType: .rtf)
+            item.setData(rtf, forType: .rtf)
         }
         // Plain text fallback = the original URL (normal paste behavior for plain-text apps)
-        pasteboard.setString(url, forType: .string)
+        item.setString(url, forType: .string)
+
+        pasteboard.writeObjects([item])
     }
 }
