@@ -44,7 +44,9 @@ enum PasteInterceptor {
               !selectedText.isEmpty else {
             NSLog("[HyperPaste] No selected text (AX + Cmd+C fallback both failed)")
             let bundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "unknown"
-            Diagnostics.reportFailure(step: "selected_text", bundleID: bundleID)
+            if !isPlainTextApp(bundleID) {
+                Diagnostics.reportFailure(step: "selected_text", bundleID: bundleID)
+            }
             return Unmanaged.passUnretained(event)
         }
 
@@ -78,5 +80,23 @@ enum PasteInterceptor {
             "org.chromium.Chromium"
         ]
         return chromiumIDs.contains(bundleID)
+    }
+
+    private static func isPlainTextApp(_ bundleID: String) -> Bool {
+        let plainTextApps = [
+            "com.apple.Terminal",
+            "com.apple.dt.Xcode",
+            "com.microsoft.VSCode",
+            "com.todesktop.230313mzl4w4u92",  // Cursor
+            "dev.warp.Warp-Stable",
+            "com.googlecode.iterm2",
+            "co.zeit.hyper",
+            "com.sublimetext.4",
+            "com.sublimetext.3",
+            "org.vim.MacVim",
+            "com.panic.Nova",
+            "com.barebones.bbedit",
+        ]
+        return plainTextApps.contains(bundleID)
     }
 }
