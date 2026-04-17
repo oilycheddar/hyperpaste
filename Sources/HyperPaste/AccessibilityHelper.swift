@@ -7,6 +7,11 @@ enum AccessibilityHelper {
     /// PasteInterceptor checks this to avoid recursion.
     static var isSynthesizing = false
 
+    /// True if the last getSelectedText() call succeeded via the AX API (native/Safari path).
+    /// When false, the Cmd+C fallback was used (Chrome/Electron path).
+    /// PasteInterceptor uses this to decide whether to include HTML on the clipboard.
+    static var lastGetUsedAX = false
+
     static func isTrusted() -> Bool {
         return AXIsProcessTrusted()
     }
@@ -20,10 +25,12 @@ enum AccessibilityHelper {
     /// Tries the Accessibility API first; falls back to simulating Cmd+C for apps like Chrome.
     static func getSelectedText() -> String? {
         if let text = getSelectedTextViaAX(), !text.isEmpty {
+            lastGetUsedAX = true
             return text
         }
 
         NSLog("[HyperPaste] AX API returned nil, trying Cmd+C fallback")
+        lastGetUsedAX = false
         return getSelectedTextViaCopy()
     }
 

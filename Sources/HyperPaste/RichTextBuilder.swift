@@ -2,8 +2,11 @@ import AppKit
 
 enum RichTextBuilder {
 
-    /// Writes an HTML hyperlink, RTF hyperlink, and plain-text fallback to the general pasteboard.
-    static func writeHyperlink(text: String, url: String) {
+    /// Writes a hyperlink to the general pasteboard.
+    /// When `includeHTML` is true, writes HTML + RTF + plain text (needed for Chrome/Electron).
+    /// When false, writes RTF + plain text only (native apps read RTF; web editors that
+    /// don't support links fall back to plain text instead of stripping the HTML link).
+    static func writeHyperlink(text: String, url: String, includeHTML: Bool = true) {
         guard let urlObj = URL(string: url) else { return }
 
         // --- HTML representation ---
@@ -33,7 +36,9 @@ enum RichTextBuilder {
         pasteboard.clearContents()
 
         let item = NSPasteboardItem()
-        item.setString(html, forType: .html)
+        if includeHTML {
+            item.setString(html, forType: .html)
+        }
         if let rtf = rtfData {
             item.setData(rtf, forType: .rtf)
         }

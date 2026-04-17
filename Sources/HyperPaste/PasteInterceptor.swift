@@ -58,12 +58,23 @@ enum PasteInterceptor {
             return Unmanaged.passUnretained(event)
         }
 
+        // Skip hyperlink on sites that don't support inline links (LinkedIn, X, etc.)
+        if isBrowserOnPlainTextSite() {
+            NSLog("[HyperPaste] Plain-text site detected, passing through normal paste")
+            return Unmanaged.passUnretained(event)
+        }
+
         // Both conditions met — create a hyperlink
         let url = clipboardText.trimmingCharacters(in: .whitespacesAndNewlines)
 
         // Save clipboard, write hyperlink, let Cmd+V proceed, then restore
         PasteboardManager.saveState()
-        RichTextBuilder.writeHyperlink(text: selectedText, url: url)
+
+        // Include HTML only when AX failed (Chrome/Electron) — those apps need HTML for hyperlinks.
+        // When AX worked (native/Safari), skip HTML: native apps use RTF, and web editors that
+        // don't support links will read plain text (the URL) instead of stripping the HTML link.
+        let includeHTML = !AccessibilityHelper.lastGetUsedAX
+        RichTextBuilder.writeHyperlink(text: selectedText, url: url, includeHTML: includeHTML)
 
         // App-aware restore delay: Chromium apps need more time to read the clipboard
         let delay: Double = isChromiumApp() ? 0.75 : 0.5
@@ -86,6 +97,43 @@ enum PasteInterceptor {
             "org.chromium.Chromium"
         ]
         return chromiumIDs.contains(bundleID)
+    }
+
+    private static func isBrowserOnPlainTextSite() -> Bool {
+        guard let app = NSWorkspace.shared.frontmostApplication,
+              let bundleID = app.bundleIdentifier else { return false }
+
+        let browserIDs = [
+            "com.google.Chrome", "com.google.Chrome.canary",
+            "com.apple.Safari", "com.apple.SafariTechnologyPreview",
+            "com.brave.Browser", "com.microsoft.edgemac",
+            "com.vivaldi.Vivaldi", "com.operasoftware.Opera",
+            "org.chromium.Chromium", "org.mozilla.firefox",
+            "company.thebrowser.Browser",  // Arc
+        ]
+        guard browserIDs.contains(bundleID) else { return false }
+
+        let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        var windowValue: AnyObject?
+        guard AXUIElementCopyAttributeValue(appElement, kAXFocusedWindowAttribute as CFString, &windowValue) == .success else {
+            return false
+        }
+
+        var titleValue: AnyObject?
+        guard AXUIElementCopyAttributeValue(windowValue as! AXUIElement, kAXTitleAttribute as CFString, &titleValue) == .success,
+              let title = titleValue as? String else {
+            return false
+        }
+
+        let plainTextSitePatterns = [
+            "| LinkedIn",
+            "/ X",
+            "| Facebook",
+            "| WhatsApp",
+            "- YouTube",
+            "| Threads",
+        ]
+        return plainTextSitePatterns.contains(where: { title.contains($0) })
     }
 
     private static func isPlainTextApp(_ bundleID: String) -> Bool {
