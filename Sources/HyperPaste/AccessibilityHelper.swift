@@ -101,6 +101,41 @@ enum AccessibilityHelper {
         return text
     }
 
+    // MARK: - Rich text detection
+
+    /// Returns true if the focused field likely supports rich text (hyperlinks).
+    /// Returns true when uncertain (e.g. Chrome where AX fails) — better to try and no-op
+    /// than to skip a field that actually supports it.
+    static func focusedFieldSupportsRichText() -> Bool {
+        guard let app = NSWorkspace.shared.frontmostApplication else { return true }
+        let appElement = AXUIElementCreateApplication(app.processIdentifier)
+
+        var focusedValue: AnyObject?
+        guard AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedValue) == .success else {
+            // AX failed (Chrome, etc.) — assume rich text, best effort
+            return true
+        }
+
+        let focusedElement = focusedValue as! AXUIElement
+
+        // Single-line text fields (AXTextField) never support rich text
+        var roleValue: AnyObject?
+        if AXUIElementCopyAttributeValue(focusedElement, kAXRoleAttribute as CFString, &roleValue) == .success,
+           let role = roleValue as? String, role == "AXTextField" {
+            return false
+        }
+
+        // Check if the element supports attributed strings (rich text indicator)
+        var paramNames: CFArray?
+        if AXUIElementCopyParameterizedAttributeNames(focusedElement, &paramNames) == .success,
+           let names = paramNames as? [String] {
+            return names.contains("AXAttributedStringForRange")
+        }
+
+        // Can't determine — assume rich text
+        return true
+    }
+
     // MARK: - Clipboard save/restore (private, separate from PasteboardManager)
 
     private static func savePasteboardContents() -> [[NSPasteboard.PasteboardType: Data]] {

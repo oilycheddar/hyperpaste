@@ -52,6 +52,12 @@ enum PasteInterceptor {
 
         NSLog("[HyperPaste] Selected text: \(selectedText)")
 
+        // Skip hyperlink if the focused field doesn't support rich text — just let normal paste happen
+        guard AccessibilityHelper.focusedFieldSupportsRichText() else {
+            NSLog("[HyperPaste] Focused field is plain text, passing through normal paste")
+            return Unmanaged.passUnretained(event)
+        }
+
         // Both conditions met — create a hyperlink
         let url = clipboardText.trimmingCharacters(in: .whitespacesAndNewlines)
 
