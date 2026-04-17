@@ -82,24 +82,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if AccessibilityHelper.isTrusted() {
                 self?.accessibilityTimer?.invalidate()
                 self?.accessibilityTimer = nil
-                self?.relaunchApp()
+                self?.startEventTap()
+                NSLog("[HyperPaste] Accessibility granted, event tap started")
             }
         }
-    }
-
-    private func relaunchApp() {
-        let url = Bundle.main.bundleURL
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        task.arguments = ["-n", url.path]
-        try? task.run()
-        NSApp.terminate(nil)
     }
 
     private func showAccessibilityPrompt() {
         let alert = NSAlert()
         alert.messageText = "HyperPaste needs Accessibility permission"
-        alert.informativeText = "To read selected text and create hyperlinks when you paste, HyperPaste needs Accessibility access.\n\nClick \"Open Settings\" to grant permission. HyperPaste will restart automatically."
+        alert.informativeText = "To read selected text and create hyperlinks when you paste, HyperPaste needs Accessibility access.\n\nClick \"Open Settings\" to grant permission."
         alert.alertStyle = .informational
         alert.addButton(withTitle: "Open Settings")
         alert.addButton(withTitle: "Later")

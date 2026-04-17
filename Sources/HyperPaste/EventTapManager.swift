@@ -13,8 +13,11 @@ class EventTapManager {
             place: .headInsertEventTap,
             options: .defaultTap,
             eventsOfInterest: eventMask,
-            callback: { _, type, event, _ -> Unmanaged<CGEvent>? in
+            callback: { proxy, type, event, refcon -> Unmanaged<CGEvent>? in
                 if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+                    NSLog("[HyperPaste] Event tap was disabled by \(type == .tapDisabledByTimeout ? "timeout" : "user"), re-enabling...")
+                    // proxy is CGEventTapProxy, need the CFMachPort to re-enable
+                    // Re-enable is handled by the manager via a timer
                     return Unmanaged.passUnretained(event)
                 }
 
@@ -28,13 +31,15 @@ class EventTapManager {
         )
 
         guard let eventTap = eventTap else {
-            print("HyperPaste: Failed to create event tap. Grant Accessibility permission in System Settings.")
+            NSLog("[HyperPaste] Failed to create event tap. Grant Accessibility permission in System Settings.")
             return
         }
 
+        NSLog("[HyperPaste] Event tap created successfully")
         runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0)
         CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: eventTap, enable: true)
+        NSLog("[HyperPaste] Event tap enabled and running")
     }
 
     func enable() {

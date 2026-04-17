@@ -17,17 +17,31 @@ enum PasteInterceptor {
             return Unmanaged.passUnretained(event)
         }
 
+        NSLog("[HyperPaste] Cmd+V detected")
+
         // Is the clipboard a URL?
-        guard let clipboardText = PasteboardManager.getPlainText(),
-              URLDetector.isURL(clipboardText) else {
+        guard let clipboardText = PasteboardManager.getPlainText() else {
+            NSLog("[HyperPaste] No plain text on clipboard")
             return Unmanaged.passUnretained(event)
         }
+
+        NSLog("[HyperPaste] Clipboard: \(clipboardText)")
+
+        guard URLDetector.isURL(clipboardText) else {
+            NSLog("[HyperPaste] Not a URL")
+            return Unmanaged.passUnretained(event)
+        }
+
+        NSLog("[HyperPaste] URL detected")
 
         // Is there selected text in the frontmost app?
         guard let selectedText = AccessibilityHelper.getSelectedText(),
               !selectedText.isEmpty else {
+            NSLog("[HyperPaste] No selected text")
             return Unmanaged.passUnretained(event)
         }
+
+        NSLog("[HyperPaste] Selected text: \(selectedText)")
 
         // Both conditions met — create a hyperlink
         let url = clipboardText.trimmingCharacters(in: .whitespacesAndNewlines)
