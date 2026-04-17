@@ -82,7 +82,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
         let alert = NSAlert()
         alert.messageText = "HyperPaste"
-        alert.informativeText = "Add a link to any text just like in Slack. Works in any app that supports rich text, like Gmail, Apple Notes, Google Docs, Notion, and Outlook.\n\nVersion \(version)"
+        alert.informativeText = "Copy a URL. Select text. Cmd+V. That text is now a hyperlink — in Gmail, Notes, Google Docs, Notion, Outlook, and anywhere that supports rich text.\n\nVersion \(version)"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
         alert.runModal()

@@ -38,27 +38,26 @@ enum RichTextBuilder {
 
     // MARK: - RTF (native apps)
 
-    /// Builds a minimal RTF hyperlink without trailing \par (which causes
-    /// paragraph breaks when pasted as a fragment into Pages, Word, etc.).
+    /// Uses NSAttributedString to generate RTF (so Pages, Word, etc. can parse it)
+    /// then strips the trailing \par that causes paragraph breaks when pasted.
     private static func buildRTF(text: String, url: String) -> Data? {
-        let rtf = "{\\rtf1\\ansi {\\field{\\*\\fldinst{HYPERLINK \"\(rtfEscape(url))\"}}{\\fldrslt \(rtfEscape(text))}}}"
-        return rtf.data(using: .utf8)
-    }
+        guard let urlObj = URL(string: url) else { return nil }
 
-    private static func rtfEscape(_ string: String) -> String {
-        var result = ""
-        for scalar in string.unicodeScalars {
-            switch scalar.value {
-            case 0x5C: result += "\\\\"
-            case 0x7B: result += "\\{"
-            case 0x7D: result += "\\}"
-            case 0x20...0x7E: result += String(scalar)
-            default:
-                // RTF Unicode escape: \uN followed by a replacement char
-                let code = Int32(bitPattern: UInt32(scalar.value))
-                result += "\\u\(code)?"
-            }
+        let attributed = NSMutableAttributedString(string: text)
+        let fullRange = NSRange(location: 0, length: attributed.length)
+        attributed.addAttribute(.link, value: urlObj, range: fullRange)
+        attributed.addAttribute(.font, value: NSFont.systemFont(ofSize: NSFont.systemFontSize), range: fullRange)
+
+        guard let rtfData = try? attributed.data(
+            from: fullRange,
+            documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
+        ) else { return nil }
+
+        // Strip trailing \par to prevent paragraph breaks when pasting as a fragment
+        guard var rtfString = String(data: rtfData, encoding: .utf8) else { return rtfData }
+        if let range = rtfString.range(of: "\\par", options: .backwards) {
+            rtfString.removeSubrange(range)
         }
-        return result
+        return rtfString.data(using: .utf8) ?? rtfData
     }
 }

@@ -45,18 +45,16 @@ enum PasteInterceptor {
             NSLog("[HyperPaste] No selected text (AX + Cmd+C fallback both failed)")
             let bundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "unknown"
             if !isPlainTextApp(bundleID) {
-                Diagnostics.reportFailure(step: "selected_text", bundleID: bundleID)
+                Diagnostics.reportFailure(
+                    step: "selected_text",
+                    description: "Could not read selected text via AX API or Cmd+C fallback. User had a URL on clipboard and text selected, but HyperPaste couldn't capture the selection.",
+                    clipboardURL: clipboardText
+                )
             }
             return Unmanaged.passUnretained(event)
         }
 
         NSLog("[HyperPaste] Selected text: \(selectedText)")
-
-        // Skip hyperlink if the focused field doesn't support rich text — just let normal paste happen
-        guard AccessibilityHelper.focusedFieldSupportsRichText() else {
-            NSLog("[HyperPaste] Focused field is plain text, passing through normal paste")
-            return Unmanaged.passUnretained(event)
-        }
 
         // Skip hyperlink on sites that don't support inline links (LinkedIn, X, etc.)
         if isBrowserOnPlainTextSite() {
