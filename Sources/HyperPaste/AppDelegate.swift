@@ -1,13 +1,22 @@
 import AppKit
+import Sparkle
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var eventTapManager: EventTapManager?
     private var enableMenuItem: NSMenuItem!
     private var accessibilityTimer: Timer?
+    private var updaterController: SPUStandardUpdaterController!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+
+        updaterController = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
+
         setupMenuBar()
 
         if !AccessibilityHelper.isTrusted() {
@@ -33,6 +42,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(enableMenuItem)
 
         menu.addItem(NSMenuItem.separator())
+
+        let checkForUpdatesItem = NSMenuItem(
+            title: "Check for Updates...",
+            action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)),
+            keyEquivalent: ""
+        )
+        checkForUpdatesItem.target = updaterController
+        menu.addItem(checkForUpdatesItem)
 
         let aboutItem = NSMenuItem(title: "About HyperPaste", action: #selector(showAbout), keyEquivalent: "")
         aboutItem.target = self
@@ -60,9 +77,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func showAbout() {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
         let alert = NSAlert()
         alert.messageText = "HyperPaste"
-        alert.informativeText = "Add a link to any text just like in Slack. Works in any app that supports rich text, like Gmail, Apple Notes, Google Docs, Notion, and Outlook.\n\nVersion 1.0.0"
+        alert.informativeText = "Add a link to any text just like in Slack. Works in any app that supports rich text, like Gmail, Apple Notes, Google Docs, Notion, and Outlook.\n\nVersion \(version)"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
         alert.runModal()

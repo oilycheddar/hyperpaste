@@ -24,5 +24,15 @@
     <true/>
     <key>NSAccessibilityUsageDescription</key>
     <string>HyperPaste needs Accessibility access to read selected text and create hyperlinks when you paste.</string>
+
+    <!-- Sparkle Auto-Update -->
+    <key>SUFeedURL</key>
+    <string>https://www.georgevisan.com/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>GnL6G40LrLkSjq4BMGw8pKYkAAszFqu1ui1TcsCxB40=</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUScheduledCheckInterval</key>
+    <integer>86400</integer>
 </dict>
 </plist>
